@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+
+  asari_test:
+    container_name: asari_test
+    build: .
+    volumes:
+      - .:/asari
+    environment:
+      - MONGO_DSN=mongodb://test:test@asari_db
+      - DATABASE_NAME=asari
+
+  asari_db:
+    container_name: asari_db
+    image: mongo:4.2
+    restart: always
+    ports:
+      - 27099:27017
+    environment:
+      - MONGO_INITDB_DATABASE=asari
+      - MONGO_INITDB_ROOT_USERNAME=test
+      - MONGO_INITDB_ROOT_PASSWORD=test
