@@ -150,14 +150,17 @@ func (d *Base) GetFormattedDeletedAt() *formattedTimestamp {
 }
 
 func (d *Base) GetTimeStamps() map[string]formattedTimestamp {
-	return map[string]formattedTimestamp{
-		"createdAt": *d.GetFormattedCreatedAt(),
-		"updatedAt": *d.GetFormattedUpdatedAt(),
+	t := map[string]formattedTimestamp{"createdAt": *d.GetFormattedCreatedAt()}
+	if updatedAt := d.GetFormattedUpdatedAt(); updatedAt != nil {
+		t["updatedAt"] = *d.GetFormattedUpdatedAt()
 	}
+	return t
 }
 
 func (d *Base) GetAllTimeStamps() map[string]formattedTimestamp {
 	t := d.GetTimeStamps()
-	t["deletedAt"] = *d.GetFormattedDeletedAt()
+	if deletedAt := d.GetFormattedDeletedAt(); deletedAt != nil {
+		t["deletedAt"] = *d.GetFormattedDeletedAt()
+	}
 	return t
 }
