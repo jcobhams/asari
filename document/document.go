@@ -21,6 +21,7 @@ type (
 		FormatDate(d time.Time, layout string) string
 		FormatDateShort(d time.Time) string
 		FormatDateTimeShort(d time.Time) string
+		GetTimeStamps() map[string]formattedTimestamp
 		GetAllTimeStamps() map[string]formattedTimestamp
 		GetFormattedCreatedAt() *formattedTimestamp
 		GetFormattedUpdatedAt() *formattedTimestamp
@@ -148,10 +149,15 @@ func (d *Base) GetFormattedDeletedAt() *formattedTimestamp {
 	return nil
 }
 
-func (d *Base) GetAllTimeStamps() map[string]formattedTimestamp {
+func (d *Base) GetTimeStamps() map[string]formattedTimestamp {
 	return map[string]formattedTimestamp{
 		"createdAt": *d.GetFormattedCreatedAt(),
 		"updatedAt": *d.GetFormattedUpdatedAt(),
-		"deletedAt": *d.GetFormattedDeletedAt(),
 	}
+}
+
+func (d *Base) GetAllTimeStamps() map[string]formattedTimestamp {
+	t := d.GetTimeStamps()
+	t["deletedAt"] = *d.GetFormattedDeletedAt()
+	return t
 }

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"math"
 )
@@ -24,6 +25,11 @@ type (
 	PaginatedResult struct {
 		Paginator
 		Cursor *mongo.Cursor
+	}
+
+	AggregationPaginatedResult struct {
+		Paginator
+		Data []bson.Raw
 	}
 )
 

@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"github.com/jcobhams/asari/document"
 	"github.com/jcobhams/asari/queryfilter"
 	"github.com/stretchr/testify/assert"
@@ -395,8 +394,6 @@ func TestClient_SoftDeleteDocument(t *testing.T) {
 	qf := queryfilter.NewWithDeleted().
 		AddFilter(bson.E{Key: "_id", Value: user.ID}).
 		GetFilters()
-
-	fmt.Println(qf)
 
 	err = TestClient.FindOne(UserCollection, qf, nil, &u)
 	assert.Nil(t, err)

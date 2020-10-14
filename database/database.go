@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jcobhams/asari/document"
+	"github.com/jcobhams/asari/operator"
 	"github.com/jcobhams/asari/queryfilter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -285,6 +286,14 @@ func (c *client) SaveDocument(collection string, doc interface{}) (interface{}, 
 	}
 }
 
+// CountDocuments returns a count of all the documents that match the provided filters or error otherwise
+func (c *client) CountDocuments(collection string, filters interface{}) (int, error) {
+	count, err := c.Connection.Collection(collection).CountDocuments(context.TODO(), filters)
+	return int(count), err
+}
+
+// SoftDeleteDocument marks a document as deleted and sets the deleted timestamp. This does not remove the item from the
+// DB but it hides it from future queries except deleted records is added to the filters
 func (c *client) SoftDeleteDocument(collection string, doc interface{}) (*mongo.SingleResult, error) {
 	if err := c.validateDocumentKind(doc); err != nil {
 		return nil, err
@@ -315,11 +324,8 @@ func (c *client) SoftDeleteDocument(collection string, doc interface{}) (*mongo.
 	return result, err
 }
 
-func (c *client) CountDocuments(collection string, filters interface{}) (int, error) {
-	count, err := c.Connection.Collection(collection).CountDocuments(context.TODO(), filters)
-	return int(count), err
-}
-
+// HardDeleteDocument deletes a record from the DB. Careful with this as the document is irrecoverable.
+// Use SoftDeleteDocument() instead except you want the document truly gone.
 func (c *client) HardDeleteDocument(collection string, doc interface{}) (*mongo.DeleteResult, error) {
 	if err := c.validateDocumentKind(doc); err != nil {
 		return nil, err
@@ -345,6 +351,83 @@ func (c *client) HardDeleteDocument(collection string, doc interface{}) (*mongo.
 		}
 	}
 	return result, err
+}
+
+func (c *client) aggregate(collection string, pipeline mongo.Pipeline, aggregateOptions *options.AggregateOptions) (*mongo.Cursor, error) {
+	return c.Connection.Collection(collection).Aggregate(nil, pipeline, aggregateOptions)
+}
+
+// Aggregate runs a simple aggregation pipeline and returns a cursor if successful or error if any.
+// If no aggregation options are provided, allowDiskUse is set to true by default.
+func (c *client) Aggregate(collection string, pipeline mongo.Pipeline, aggregateOptions *options.AggregateOptions) (*mongo.Cursor, error) {
+
+	if aggregateOptions == nil {
+		aggregateOptions = &options.AggregateOptions{}
+		aggregateOptions.SetAllowDiskUse(true)
+	}
+
+	return c.aggregate(collection, pipeline, aggregateOptions)
+}
+
+// AggregatePaginated runs an aggregation that will have paginated results.
+func (c *client) AggregatePaginated(collection string, pageOptions PageOpts, pipeline mongo.Pipeline, aggregateOptions *options.AggregateOptions) (*AggregationPaginatedResult, error) {
+
+	if aggregateOptions == nil {
+		aggregateOptions = &options.AggregateOptions{}
+		aggregateOptions.SetAllowDiskUse(true)
+	}
+
+	paginator := NewPaginator(pageOptions)
+	paginator.SetOffset()
+
+	facetPipeline := bson.D{
+		{
+			operator.Facet,
+			bson.D{
+				{Key: "meta", Value: bson.A{bson.M{operator.Count: "total"}}},
+				{Key: "data", Value: bson.A{bson.M{operator.Skip: paginator.Offset}, bson.M{operator.Limit: paginator.PerPage}}},
+			},
+		},
+	}
+
+	pipeline = append(pipeline, facetPipeline)
+
+	cur, err := c.aggregate(collection, pipeline, aggregateOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(nil)
+
+	type (
+		meta struct {
+			Total int64 `json:"total" bson:"total"`
+		}
+		result struct {
+			Meta []meta     `json:"meta" bson:"meta"`
+			Data []bson.Raw `json:"data" bson:"data"`
+		}
+	)
+
+	var r result
+	for cur.Next(nil) {
+		var tmpR result
+		if err := cur.Decode(&tmpR); err != nil {
+			return nil, err
+		}
+		r = tmpR
+	}
+
+	if len(r.Data) > 0 && len(r.Meta) > 0 {
+
+		paginator.TotalRows = r.Meta[0].Total
+		paginator.SetTotalPages()
+		paginator.SetPrevPage()
+		paginator.SetNextPage()
+
+		return &AggregationPaginatedResult{Paginator: *paginator, Data: r.Data}, nil
+	}
+
+	return &AggregationPaginatedResult{Paginator: *paginator, Data: r.Data}, nil
 }
 
 func (c *client) validateDocumentKind(obj interface{}) error {
