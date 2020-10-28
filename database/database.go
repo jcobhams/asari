@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/jcobhams/asari/builder"
 	"github.com/jcobhams/asari/document"
 	"github.com/jcobhams/asari/operator"
 	"github.com/jcobhams/asari/queryfilter"
@@ -235,6 +236,11 @@ func (c *client) updateDocument(collection string, filters []bson.E, doc interfa
 	return result, nil
 }
 
+// SaveDocument will create a new document or update an existing document if doc is not new.
+// if doc is new and implements the PreCreator interface, the PreCreate hook will fire or return appropriate error.
+// if doc is new and implements the PostCreator interface, the PostCreate hook will fire or return appropriate error.
+// if doc is existing and implements the PreUpdater interface, the PreUpdate hook will fire or return appropriate error.
+// if doc is new and implements the PostUpdater interface, the PostUpdate hook will fire or return appropriate error.
 func (c *client) SaveDocument(collection string, doc interface{}) (interface{}, error) {
 	if err := c.validateDocumentKind(doc); err != nil {
 		return nil, err
@@ -284,6 +290,14 @@ func (c *client) SaveDocument(collection string, doc interface{}) (interface{}, 
 
 		return doc, err
 	}
+}
+
+// UpdateMany finds the documents that match the filter and update them based on the operators configured in the UpdateManyBuilder
+func (c *client) UpdateMany(collection string, filters []bson.E, updateBuilder *builder.UpdateManyBuilder, updateOptions *options.UpdateOptions) (*mongo.UpdateResult, error) {
+	if updateBuilder.HasValues() {
+		return c.Connection.Collection(collection).UpdateMany(context.TODO(), filters, updateBuilder.Get(), updateOptions)
+	}
+	return nil, errors.New("emp")
 }
 
 // CountDocuments returns a count of all the documents that match the provided filters or error otherwise

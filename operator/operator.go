@@ -30,6 +30,7 @@ const (
 	Sort           = "$sort"
 	SortByCount    = "$sortByCount"
 	Unset          = "$unset"
+	Mul            = "$mul"
 	Unwind         = "$unwind"
 
 	Avg        = "$avg"

@@ -1,7 +1,9 @@
 package database
 
 import (
+	"github.com/jcobhams/asari/builder"
 	"github.com/jcobhams/asari/document"
+	"github.com/jcobhams/asari/operator"
 	"github.com/jcobhams/asari/queryfilter"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,6 +20,7 @@ type User struct {
 	document.Base `bson:",inline"`
 	FirstName     string `bson:"first_name"`
 	LastName      string `bson:"last_name"`
+	Email         string `bson:"email"`
 	Level         int    `bson:"level"`
 }
 
@@ -448,6 +451,44 @@ func TestClient_HardDeleteDocument(t *testing.T) {
 	qf = queryfilter.NewWithDeleted().AddFilter(bson.E{Key: "_id", Value: user.ID}).GetFilters()
 	count, _ = TestClient.CountDocuments(UserCollection, qf)
 	assert.Equal(t, 0, count)
+
+	tearDown()
+}
+
+func TestClient_UpdateMany(t *testing.T) {
+	user1 := &User{
+		FirstName: "Joseph",
+		LastName:  "Dahryl",
+	}
+	user1.Setup()
+	TestClient.Connection.Collection(UserCollection).InsertOne(nil, user1)
+
+	user2 := &User{
+		FirstName: "Asari",
+		LastName:  "Dahryl",
+	}
+	user2.Setup()
+	TestClient.Connection.Collection(UserCollection).InsertOne(nil, user2)
+
+	user3 := &User{
+		FirstName: "Ivy",
+		LastName:  "Ariella",
+	}
+	user3.Setup()
+	TestClient.Connection.Collection(UserCollection).InsertOne(nil, user3)
+
+	qf := queryfilter.New().AddFilter(bson.E{Key: "last_name", Value: "Dahryl"}).GetFilters()
+
+	ub := builder.NewUpdateManyBuilder().
+		Add(operator.Set, bson.E{Key: "last_name", Value: "dahryl"}, bson.E{Key: "level", Value: 2})
+
+	res, err := TestClient.UpdateMany(UserCollection, qf, ub, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(2), res.MatchedCount)
+	assert.Equal(t, int64(2), res.ModifiedCount)
+
+	count, _ := TestClient.CountDocuments(UserCollection, queryfilter.New().AddFilter(bson.E{Key: "last_name", Value: "dahryl"}).GetFilters())
+	assert.Equal(t, 2, count)
 
 	tearDown()
 }
