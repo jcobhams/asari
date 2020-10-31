@@ -43,17 +43,9 @@ func Init(mongoDSN, databaseName string) *client {
 	return &client{Connection: database}
 }
 
-func (c *client) findOne(collection string, filters []bson.E, projection, target interface{}) error {
+func (c *client) findOne(collection string, filters []bson.E, target interface{}, findOneOptions ...*options.FindOneOptions) error {
 	if err := c.validateDocumentKind(target); err != nil {
 		return err
-	}
-
-	if err := c.validateProjection(projection); err != nil {
-		return err
-	}
-
-	opts := &options.FindOneOptions{
-		Projection: projection,
 	}
 
 	filters = c.applyIsDeletedFilter(filters)
@@ -61,7 +53,7 @@ func (c *client) findOne(collection string, filters []bson.E, projection, target
 		return err
 	}
 
-	err := c.Connection.Collection(collection).FindOne(context.TODO(), filters, opts).Decode(target)
+	err := c.Connection.Collection(collection).FindOne(context.TODO(), filters, findOneOptions...).Decode(target)
 	if err == nil {
 
 	}
@@ -72,8 +64,16 @@ func (c *client) findOne(collection string, filters []bson.E, projection, target
 // If projection is nil, all fields are returned.
 // To specify only select fields, use a bson.M - eg: bson.M{"email":1, "phone":1}
 // Target has to be a pointer to a struct where the document will be unmarshalled into.
-func (c *client) FindOne(collection string, filters []bson.E, projection, target interface{}) error {
-	return c.findOne(collection, filters, projection, target)
+func (c *client) FindOne(collection string, filters []bson.E, projection, target interface{}, findOneOptions ...*options.FindOneOptions) error {
+	if err := c.validateProjection(projection); err != nil {
+		return err
+	}
+	opts := &options.FindOneOptions{
+		Projection: projection,
+	}
+	findOneOptions = append(findOneOptions, opts)
+
+	return c.findOne(collection, filters, target, findOneOptions...)
 }
 
 // FindOneByID finds a document that matches the provided ID in the collection.
@@ -81,8 +81,14 @@ func (c *client) FindOne(collection string, filters []bson.E, projection, target
 // To specify only select fields, use a bson.M - eg: bson.M{"email":1, "phone":1}
 // Target has to be a pointer to a struct where the document will be unmarshalled into.
 func (c *client) FindOneByID(collection string, id primitive.ObjectID, projection, target interface{}) error {
+	if err := c.validateProjection(projection); err != nil {
+		return err
+	}
 	filters := queryfilter.New().AddFilter(bson.E{Key: "_id", Value: id}).GetFilters()
-	return c.findOne(collection, filters, projection, target)
+	opts := &options.FindOneOptions{
+		Projection: projection,
+	}
+	return c.findOne(collection, filters, target, opts)
 }
 
 // FindOneByField finds a document that matches the provided field and value pair.
@@ -90,8 +96,15 @@ func (c *client) FindOneByID(collection string, id primitive.ObjectID, projectio
 // To specify only select fields, use a bson.M - eg: bson.M{"email":1, "phone":1}
 // Target has to be a pointer to a struct where the document will be unmarshalled into.
 func (c *client) FindOneByField(collection, field string, value, projection, target interface{}) error {
+	if err := c.validateProjection(projection); err != nil {
+		return err
+	}
+
 	filters := queryfilter.New().AddFilter(bson.E{Key: field, Value: value}).GetFilters()
-	return c.findOne(collection, filters, projection, target)
+	opts := &options.FindOneOptions{
+		Projection: projection,
+	}
+	return c.findOne(collection, filters, target, opts)
 }
 
 // FindPaginated searches for document that matches the provided filters.

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"os"
 	"testing"
 )
@@ -65,26 +66,33 @@ func TestClient_FindOneInternal(t *testing.T) {
 
 	var u User
 	qf := queryfilter.New().AddFilter(bson.E{Key: "first_name", Value: "Joseph"})
-	err := TestClient.findOne(UserCollection, qf.GetFilters(), nil, &u)
+	err := TestClient.findOne(UserCollection, qf.GetFilters(), &u)
 	assert.Nil(t, err)
 	assert.Equal(t, user.FirstName, u.FirstName)
 	assert.Equal(t, user.LastName, u.LastName)
 	assert.Equal(t, user.Level, u.Level)
 
 	//Test Error is returned if doc is not a pointer
-	assert.Error(t, TestClient.findOne(UserCollection, qf.GetFilters(), nil, u))
+	assert.Error(t, TestClient.findOne(UserCollection, qf.GetFilters(), u))
 
 	//Test Error is returned if queryfilter contains empty field names
 	qf2 := qf
 	qf2f := append(qf2.GetFilters(), bson.E{Key: "", Value: "some"})
-	assert.Error(t, TestClient.findOne(UserCollection, qf2f, nil, &u))
+	assert.Error(t, TestClient.findOne(UserCollection, qf2f, &u, nil))
 
 	//Test Invalid Projections
-	assert.Error(t, TestClient.findOne(UserCollection, qf2f, map[string]interface{}{"test": 1}, &u))
+	opts := &options.FindOneOptions{
+		Projection: map[string]interface{}{"test": 1},
+	}
+	assert.Error(t, TestClient.findOne(UserCollection, qf2f, &u, opts))
 
 	//Test Projection
 	var u2 User
-	err = TestClient.findOne(UserCollection, qf.GetFilters(), bson.M{"last_name": 1}, &u2)
+
+	opts = &options.FindOneOptions{
+		Projection: bson.M{"last_name": 1},
+	}
+	err = TestClient.findOne(UserCollection, qf.GetFilters(), &u2, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, user.LastName, u2.LastName)
 	assert.NotEqual(t, user.FirstName, u2.FirstName)
