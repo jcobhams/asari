@@ -50,4 +50,16 @@ type (
 		// PostHardDelete runs the concrete implementation after a document is hard deleted.
 		PostHardDelete(dbConnection *mongo.Database) error
 	}
+
+	// PreFindOne
+	PreFindOne interface {
+		//PreFindOne runs the concrete implementation before any FindOne*() is called
+		PreFindOne(dbConnection *mongo.Database) error
+	}
+
+	// PostFindOne
+	PostFindOne interface {
+		//PostFindOne runs the concrete implementation before any FindOne*() is called
+		PostFindOne(dbConnection *mongo.Database) error
+	}
 )

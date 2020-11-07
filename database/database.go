@@ -53,10 +53,20 @@ func (c *client) findOne(collection string, filters []bson.E, target interface{}
 		return err
 	}
 
-	err := c.Connection.Collection(collection).FindOne(context.TODO(), filters, findOneOptions...).Decode(target)
-	if err == nil {
-
+	if preFindOne, ok := target.(document.PreFindOne); ok {
+		if err := preFindOne.PreFindOne(c.Connection); err != nil {
+			return errors.New(fmt.Sprintf("asari: PreOneUpdate Hook Error: %v", err))
+		}
 	}
+
+	err := c.Connection.Collection(collection).FindOne(context.TODO(), filters, findOneOptions...).Decode(target)
+
+	if postFindOne, ok := target.(document.PostFindOne); ok {
+		if err := postFindOne.PostFindOne(c.Connection); err != nil {
+			return errors.New(fmt.Sprintf("asari: PostOneUpdate Hook Error: %v", err))
+		}
+	}
+
 	return err
 }
 
