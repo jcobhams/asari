@@ -176,10 +176,16 @@ func (c *client) FindLast(collection string, filters []bson.E, projection, targe
 		return err
 	}
 
+	hasResults := false
 	for cur.Next(nil) {
 		cur.Decode(target)
+		hasResults = true
 	}
-	return nil
+
+	if hasResults {
+		return nil
+	}
+	return mongo.ErrNoDocuments
 }
 
 // FindLastN returns the N (limit) most recent documents in the collection that matches the provided filters.
@@ -320,7 +326,7 @@ func (c *client) UpdateMany(collection string, filters []bson.E, updateBuilder *
 	if updateBuilder.HasValues() {
 		return c.Connection.Collection(collection).UpdateMany(context.TODO(), filters, updateBuilder.Get(), updateOptions)
 	}
-	return nil, errors.New("emp")
+	return nil, errors.New("empty UpdateManyBuilder provided")
 }
 
 // CountDocuments returns a count of all the documents that match the provided filters or error otherwise
