@@ -30,13 +30,13 @@ type (
 
 	//Base is the base document all documents must inherit. This ensure shared document properties can be set.
 	Base struct {
-		ID         primitive.ObjectID     `bson:"_id,omitempty" json:"_id"`
-		CreatedAt  time.Time              `bson:"created_at" json:"-"`
-		UpdatedAt  time.Time              `bson:"updated_at" json:"-"`
-		DeletedAt  time.Time              `bson:"deleted_at,omitempty" json:"-"`
-		IsDeleted  bool                   `bson:"is_deleted" json:"-"`
-		isNew      bool                   `json:"-" bson:"-"`
-		Timestamps map[string]interface{} `bson:"-" json:"timestamps"`
+		ID         primitive.ObjectID            `bson:"_id,omitempty" json:"_id"`
+		CreatedAt  time.Time                     `bson:"created_at" json:"-"`
+		UpdatedAt  time.Time                     `bson:"updated_at" json:"-"`
+		DeletedAt  time.Time                     `bson:"deleted_at,omitempty" json:"-"`
+		IsDeleted  bool                          `bson:"is_deleted" json:"-"`
+		isNew      bool                          `json:"-" bson:"-"`
+		Timestamps map[string]formattedTimestamp `bson:"-" json:"timestamps"`
 	}
 
 	formattedTimestamp struct {
