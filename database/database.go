@@ -61,9 +61,11 @@ func (c *client) findOne(collection string, filters []bson.E, target interface{}
 
 	err := c.Connection.Collection(collection).FindOne(context.TODO(), filters, findOneOptions...).Decode(target)
 
-	if postFindOne, ok := target.(document.PostFindOne); ok {
-		if err := postFindOne.PostFindOne(c.Connection); err != nil {
-			return errors.New(fmt.Sprintf("asari: PostOneUpdate Hook Error: %v", err))
+	if err == nil {
+		if postFindOne, ok := target.(document.PostFindOne); ok {
+			if err := postFindOne.PostFindOne(c.Connection); err != nil {
+				return errors.New(fmt.Sprintf("asari: PostOneUpdate Hook Error: %v", err))
+			}
 		}
 	}
 

@@ -57,9 +57,9 @@ type (
 		PreFindOne(dbConnection *mongo.Database) error
 	}
 
-	// PostFindOne
+	// PostFindOne - Runs after a document is successfully found and marshalled into a target
 	PostFindOne interface {
-		//PostFindOne runs the concrete implementation before any FindOne*() is called
+		//PostFindOne runs the concrete implementation after any FindOne*() is called
 		PostFindOne(dbConnection *mongo.Database) error
 	}
 )
