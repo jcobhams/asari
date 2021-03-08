@@ -1,4 +1,5 @@
-FROM golang:1.14-stretch
+FROM golang:1.14-alpine
+RUN apk add build-base
 
 ADD . /asari
 WORKDIR /asari

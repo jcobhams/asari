@@ -1,9 +1,13 @@
 package database
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"math"
+)
+
+var (
+	DefaultPageNumber  int64 = 1
+	DefaultPerPageRows int64 = 20
 )
 
 type (
@@ -26,11 +30,6 @@ type (
 		Paginator
 		Cursor *mongo.Cursor
 	}
-
-	AggregationPaginatedResult struct {
-		Paginator
-		Data []bson.Raw
-	}
 )
 
 func NewPaginator(opts PageOpts) *Paginator {
@@ -38,13 +37,13 @@ func NewPaginator(opts PageOpts) *Paginator {
 	p.Offset = 0
 
 	if opts.Page <= 1 {
-		p.CurrentPage = 1
+		p.CurrentPage = DefaultPageNumber
 	} else {
 		p.CurrentPage = opts.Page
 	}
 
 	if opts.PerPage < 1 {
-		p.PerPage = 20
+		p.PerPage = DefaultPerPageRows
 	} else {
 		p.PerPage = opts.PerPage
 	}
