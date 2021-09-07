@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-var TestClient *client
+var TestClient *Client
 
 const UserCollection string = "users"
 
@@ -46,7 +46,7 @@ func TestInit(t *testing.T) {
 	mongoDSN, _ := os.LookupEnv("MONGO_DSN")
 	databaseName, _ := os.LookupEnv("DATABASE_NAME")
 
-	var c *client
+	var c *Client
 	if assert.NotPanics(t, func() { c = Init(mongoDSN, databaseName) }) {
 		assert.NotNil(t, c)
 		assert.Equal(t, databaseName, c.Connection.Name())
