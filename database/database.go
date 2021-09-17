@@ -36,7 +36,7 @@ func Init(mongoDSN, databaseName string, opts ...*options.ClientOptions) *Client
 
 	err = mClient.Ping(ctx, readpref.Primary())
 	if err != nil {
-		log.Panic("Could Not Connect To Primary shard")
+		log.Panicf("Could Not Connect To Primary shard | Error: %v", err)
 	}
 	database := mClient.Database(databaseName)
 
