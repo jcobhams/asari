@@ -46,7 +46,7 @@ type (
 	}
 )
 
-//Setup initializes a document with ID and Timestamps
+// Setup initializes a document with ID and Timestamps
 func (d *Base) Setup() error {
 	if d.ID == primitive.NilObjectID {
 		d.ID = primitive.NewObjectID()
@@ -65,29 +65,29 @@ func (d *Base) CanSave() bool {
 	return true
 }
 
-//GetID returns a document's ID
+// GetID returns a document's ID
 func (d *Base) GetID() primitive.ObjectID {
 	return d.ID
 }
 
-//GetCreatedAt returns a document's created time
+// GetCreatedAt returns a document's created time
 func (d *Base) GetCreatedAt() time.Time {
 	return d.CreatedAt
 }
 
-//GetUpdatedAt returns a document's last update time
+// GetUpdatedAt returns a document's last update time
 func (d *Base) GetUpdatedAt() time.Time {
 	return d.UpdatedAt
 }
 
-//IsNew returns a document's initialization state.
+// IsNew returns a document's initialization state.
 func (d *Base) IsNew() bool {
 	return d.isNew
 }
 
-//SetIsNew sets the isNew property to provided status.
-//If status is true, This signals that the current instance has not been saved before and document.Save() will perform an insert.
-//If status is false, This makes all calls to document.Save() perform an update operation not an insert.
+// SetIsNew sets the isNew property to provided status.
+// If status is true, This signals that the current instance has not been saved before and document.Save() will perform an insert.
+// If status is false, This makes all calls to document.Save() perform an update operation not an insert.
 func (d *Base) SetIsNew(status bool) {
 	d.isNew = status
 }
@@ -101,17 +101,17 @@ func (d *Base) BeforeSoftDelete() {
 	d.DeletedAt = time.Now().UTC()
 }
 
-//FormatDateShort returns a formatted time object in the format MMM DD, YYYY
+// FormatDateShort returns a formatted time object in the format MMM DD, YYYY
 func (d *Base) FormatDateShort(dt time.Time) string {
 	return dt.Format("Jan 02, 2006")
 }
 
-//FormatDateTimeShort returns a formatted time object in the format MMM DD, YYYY - HH:MM
+// FormatDateTimeShort returns a formatted time object in the format MMM DD, YYYY - HH:MM
 func (d *Base) FormatDateTimeShort(dt time.Time) string {
 	return dt.Format("Jan 02, 2006 - 15:04")
 }
 
-//FormatDate returns a formatted time object based on the provided layout.
+// FormatDate returns a formatted time object based on the provided layout.
 func (d *Base) FormatDate(dt time.Time, layout string) string {
 	return dt.Format(layout)
 }
@@ -150,7 +150,12 @@ func (d *Base) GetFormattedDeletedAt() *formattedTimestamp {
 }
 
 func (d *Base) GetTimeStamps() map[string]formattedTimestamp {
-	t := map[string]formattedTimestamp{"createdAt": *d.GetFormattedCreatedAt()}
+	t := map[string]formattedTimestamp{}
+
+	if createdAt := d.GetFormattedCreatedAt(); createdAt != nil {
+		t["createdAt"] = *d.GetFormattedCreatedAt()
+	}
+
 	if updatedAt := d.GetFormattedUpdatedAt(); updatedAt != nil {
 		t["updatedAt"] = *d.GetFormattedUpdatedAt()
 	}
