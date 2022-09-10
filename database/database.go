@@ -31,7 +31,7 @@ func Init(mongoDSN, databaseName string, opts ...*options.ClientOptions) *Client
 	mClient, err := mongo.Connect(ctx, opts...)
 
 	if err != nil {
-		log.Panic(fmt.Sprintf("Could Not Connect To Server - %v", mongoDSN))
+		log.Panic("Could Not Connect To Server")
 	}
 
 	err = mClient.Ping(ctx, readpref.Primary())
